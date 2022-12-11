@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\ColumnController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +33,13 @@ Route::get('tasks/{id}', [TaskController::class, 'show']);
 Route::post('columns/{columnId}/tasks', [TaskController::class, 'store']);
 Route::post('tasks/{id}', [TaskController::class, 'update']);
 Route::delete('tasks/{id}', [TaskController::class, 'delete']);
+
+// Column
+Route::get('projects/{projectId}/columns', [ColumnController::class, 'index']);
+Route::get('columns/{id}', [ColumnController::class, 'show']);
+Route::post('projects/{projectId}/columns', [ColumnController::class, 'store']);
+Route::post('columns/{id}', [ColumnController::class, 'update']);
+Route::delete('columns/{id}', [ColumnController::class, 'delete']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

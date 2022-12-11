@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Column;
 use App\Models\Project;
-use App\Models\Task;
 use Illuminate\Http\Request;
 
-class TaskController extends Controller
+class ColumnController extends Controller
 {
     public function __construct()
     {
@@ -22,11 +21,11 @@ class TaskController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($columnId)
+    public function index($projectId)
     {
         //
         try {
-            return json_encode(['data' => Task::where('column_id', '=', $columnId)->get()]);
+            return json_encode(['data' => Column::where('project_id', '=', $projectId)->get()]);
         } catch(\Exception $e)
         {
             return json_encode(['data' => $e->getMessage()]);
@@ -39,29 +38,29 @@ class TaskController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, $columnId)
+    public function store(Request $request, $projectId)
     {
         try {
 
             $validated = $request->validate([
                 'name' => 'required|min:3',
-                'description' => ''
             ]);
     
-            if(! Column::find($columnId)) {
-                throw new \Exception('Column does not exist');
+            if(! Project::find($projectId)) {
+                throw new \Exception('Project does not exist');
             }
     
-            $task = new Task;
-            $task->name = $validated['name'];
-            $task->description = $validated['description'] ?? '';
-            $task->column_id = $columnId;
-            if(! $task->save())
+            $column = new Column;
+            $column->name = $validated['name'];
+            $column->project_id = $projectId;
+            if(! $column->save())
             {
                 throw new \Exception ('Failed');
             }
 
-            return json_encode(['data' => $task]);
+            $column->tasks = [];
+
+            return json_encode(['data' => $column]);
 
         } catch(\Exception $e)
         {
@@ -77,9 +76,9 @@ class TaskController extends Controller
      */
     public function show($id)
     {
-        $task = Task::find($id);
+        $column = Column::find($id);
         
-        return json_encode(['data' => $task]);
+        return json_encode(['data' => $column]);
     }
 
     /**
@@ -95,23 +94,22 @@ class TaskController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|min:3',
-                'description' => '',
             ]);
-            $task = Task::find($id);
 
-            if(! $task) {
-                throw new \Exception('No task with id ' . $id);
+            $column = Column::find($id);
+
+            if(! $column) {
+                throw new \Exception('No column with id ' . $id);
             }
 
-            $task->name = $validated['name'];
-            $task->description = $validated['description'] ?? $task->description;
+            $column->name = $validated['name'];
             
-            if(! $task->save())
+            if(! $column->save())
             {
-                throw new \Exception('Failed to save updated task.');
+                throw new \Exception('Failed to save updated column.');
             }
 
-            return json_encode(['data' => $task]);
+            return json_encode(['data' => $column]);
 
         } catch(\Exception $e)
         {
@@ -129,15 +127,15 @@ class TaskController extends Controller
     {
         //
         try {
-            $task = Task::find($id);
+            $column = Column::find($id);
 
-            if(! $task) {
-                throw new \Exception('No task with id ' . $id);
+            if(! $column) {
+                throw new \Exception('No column with id ' . $id);
             }
 
-            if(! $task->destroy($id))
+            if(! $column->destroy($id))
             {
-                throw new \Exception('Failed to delete task.');
+                throw new \Exception('Failed to delete column.');
             }
 
             return json_encode(['data' => 'Deleted']);
