@@ -24,6 +24,13 @@ Route::post('/projects/addToArchive/{id}', [ProjectController::class, 'addToArch
 Route::delete('/projects/{id}', [ProjectController::class, 'delete']);
 
 
+// Task
+Route::get('columns/{columnId}/tasks', [TaskController::class, 'index']);
+Route::get('tasks/{id}', [TaskController::class, 'show']);
+Route::post('columns/{columnId}/tasks', [TaskController::class, 'store']);
+Route::post('tasks/{id}', [TaskController::class, 'update']);
+Route::delete('tasks/{id}', [TaskController::class, 'delete']);
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });

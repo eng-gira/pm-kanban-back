@@ -43,11 +43,11 @@ class ProjectController extends Controller
         try {
 
             $validated = $request->validate([
-                'title' => 'string|required|unique:projects,title',
+                'name' => 'string|required|unique:projects,name',
             ]);
     
             $project = new Project;
-            $project->title = $validated['title'];
+            $project->name = $validated['name'];
             return $project->save() ? json_encode(['data' => Project::find($project->id)]) : json_encode(['message' => 'failed']);
         } catch(\Exception $e)
         {
@@ -69,7 +69,7 @@ class ProjectController extends Controller
         $cols = Column::where('project_id', '=', $id)->get();
         // Inserting columns' tasks in the columns.
         $project->columns = array_map(function($col) {
-            $col->tasks = Task::where('col_id', '=', $col->id)->get();
+            $col->tasks = Task::where('column', '=', $col->id)->get();
             return $col;
         }, $cols); 
 
@@ -90,29 +90,10 @@ class ProjectController extends Controller
             $project = Project::find($id);
             if($project) {
                 $validated = $request->validate([
-                    'title' => 'string|unique:projects,title,' . $id,
-                    'budget' => 'integer',
-                    'total_spent_money' => 'integer',
-                    'status' => 'integer|min:0|max:1',
-                    'description' => 'string',
-                    'completed_at' => 'string|min:10', // e.g. 2022-11-19
-                    'currency' => 'string'
+                    'name' => 'required|string|unique:projects,name,' . $id,
                 ]);
     
-                if(count($validated) < 1) throw new \Exception('Empty payload was received!');
-
-                $project->title =  $validated['title'] ?? $project->title;
-                $project->budget = $validated['budget'] ?? $project->budget;
-                $project->total_spent_money = $validated['total_spent_money'] ?? $project->total_spent_money;
-                $project->status = $validated['status'] ?? $project->status;
-                $project->description = $validated['description'] ?? $project->description;
-                // Only update completed_at if status is actually 1 (indicating completion)
-                if(isset($validated['status']) && $validated['status'] == 1) {
-                    $project->completed_at = $validated['completed_at'] ?? Carbon::now();
-                }
-                $project->currency = $validated['currency'] ?? $project->currency;
-
-                $project->next_to_do = $request['next_to_do'] ?? $project->next_to_do;
+                $project->name =  $validated['name'];
                 
                 return $project->save() ? json_encode(['data' => $project]) : ['message' => 'failed', 'data' => 'failed to update project'];
             }
