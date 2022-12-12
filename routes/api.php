@@ -32,6 +32,7 @@ Route::get('columns/{columnId}/tasks', [TaskController::class, 'index']);
 Route::get('tasks/{id}', [TaskController::class, 'show']);
 Route::post('columns/{columnId}/tasks', [TaskController::class, 'store']);
 Route::post('tasks/{id}', [TaskController::class, 'update']);
+Route::post('tasks/{id}/relocate', [TaskController::class, 'relocate']);
 Route::delete('tasks/{id}', [TaskController::class, 'delete']);
 
 // Column

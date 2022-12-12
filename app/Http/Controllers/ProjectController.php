@@ -69,7 +69,7 @@ class ProjectController extends Controller
         $cols = Column::where('project_id', '=', $id)->get();
         // Inserting columns' tasks in the columns.
         foreach($cols as $col) {
-            $col->tasks = Task::where('column_id', '=', $col->id)->get();
+            $col->tasks = DB::table('tasks')->where('column_id', '=', $col->id)->orderBy('order')->get();
         }
         
         $project->columns = $cols;

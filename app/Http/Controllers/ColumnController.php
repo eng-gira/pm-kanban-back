@@ -45,9 +45,16 @@ class ColumnController extends Controller
             $validated = $request->validate([
                 'name' => 'required|min:3',
             ]);
-    
-            if(! Project::find($projectId)) {
+            
+            $project = Project::find($projectId);
+            if(! $project) {
                 throw new \Exception('Project does not exist');
+            } else {
+                $projCols = Column::where('project_id', '=', $projectId)->get();
+                $countProjCols = count($projCols);
+                if ($countProjCols > 49) {
+                    throw new \Exception('Reached limit of columns per project. Can not exceed ' . $countProjCols . ' columns.');
+                }
             }
     
             $column = new Column;

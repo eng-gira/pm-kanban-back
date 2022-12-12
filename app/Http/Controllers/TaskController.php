@@ -6,6 +6,7 @@ use App\Models\Column;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -26,7 +27,7 @@ class TaskController extends Controller
     {
         //
         try {
-            return json_encode(['data' => Task::where('column_id', '=', $columnId)->get()]);
+            return json_encode(['data' => DB::table('tasks')->where('column_id', '=', $columnId)->orderBy('order')->get()]);
         } catch(\Exception $e)
         {
             return json_encode(['data' => $e->getMessage()]);
@@ -44,18 +45,31 @@ class TaskController extends Controller
         try {
 
             $validated = $request->validate([
-                'name' => 'required|min:3',
+                'name' => 'required',
                 'description' => ''
             ]);
-    
-            if(! Column::find($columnId)) {
+            
+            $column = Column::find($columnId);
+            if(! $column) {
                 throw new \Exception('Column does not exist');
+            } else {
+                $colTasks = Task::where('column_id', '=', $columnId)->get();
+                $countTasks = count($colTasks);
+                if($countTasks > 99) {
+                    throw new \Exception('Reached the limit of tasks per column. Can not exceed ' . $countTasks . ' tasks.');
+                }
             }
-    
+
             $task = new Task;
             $task->name = $validated['name'];
             $task->description = $validated['description'] ?? '';
             $task->column_id = $columnId;
+
+            // last in asc is the first in desc
+            $lastTask = DB::table('tasks')->where('column_id', '=', $columnId)->orderBy('order', 'desc')->first();
+            $task->order = $lastTask !== null ? intval($lastTask->order) + 1 : 0;
+
+
             if(! $task->save())
             {
                 throw new \Exception ('Failed');
@@ -115,6 +129,70 @@ class TaskController extends Controller
 
         } catch(\Exception $e)
         {
+            return json_encode(['data' => $e->getMessage()]);
+        }
+    }
+
+    public function relocate(Request $request, $id) {
+        try {
+            $validated = $request->validate([
+                'tasksOrderInTargetCol' => 'required|array',
+                // 'orderOfBeforeTask' => '',
+                // 'orderOfAfterTask' => '',
+                'targetColId' => 'required|integer'
+            ]);
+
+            if(! Task::find($id)) {
+                throw new \Exception('No task with id ' . $id . ' was found.');
+            }
+            
+            $targetCol = Column::find($validated['targetColId']);
+            if(! $targetCol) {
+                throw new \Exception('No col with id ' . $validated['targetColId'] . ' was found.');
+            }
+
+            $tasksOrderInTargetCol = $validated['tasksOrderInTargetCol'];
+
+            $counter = 0;
+            foreach($tasksOrderInTargetCol as $id) {
+                $t = Task::find($id);
+                $t->order = $counter;
+                $t->column_id = $validated['targetColId'];
+
+                if(! $t->save()) {
+                    throw new \Exception('Failed to save relocated task at i = ' . $counter);
+                }
+                $counter++;
+            }
+
+            // $orderOfBeforeTask = floatval($validated['orderOfBeforeTask']);
+            // $orderOfAfterTask = floatval($validated['orderOfAfterTask']);
+
+            // if($orderOfAfterTask < 0 && $orderOfBeforeTask < 0) {
+            //     // The only element in the col
+            //     $task->order = '1';
+                
+            // }
+            // elseif($orderOfBeforeTask < 0 && $orderOfAfterTask > 0) {
+            //     // First element placement
+            //     $task->order = strval( ($orderOfAfterTask > 1) ? 1 : (0 + $orderOfAfterTask) / 2 ); 
+            // } elseif($orderOfAfterTask < 0 && $orderOfBeforeTask > 0) {
+            //     // Last element placement
+            //     $task->order = strval( intval($orderOfBeforeTask) + 1 ); 
+            // }
+
+            // // Column Changed too?
+            // if($task->column_id != $validated['targetColId']) {
+            //     $task->column_id = $validated['targetColId'];
+            // }
+
+            // if(! $task->save()) {
+            //     throw new \Exception('Failed to save relocated task.');
+            // }
+
+            return json_encode(['data' => $tasksOrderInTargetCol]);
+        }
+        catch (\Exception $e) {
             return json_encode(['data' => $e->getMessage()]);
         }
     }
