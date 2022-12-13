@@ -18,7 +18,7 @@ class ProjectController extends Controller
         /**
          * @todo uncomment after testing
          */
-        // $this->middleware('auth:api', ['except' => ['index', 'show', 'archive']]);
+        $this->middleware('auth:api');
     }
 
     /**
@@ -49,6 +49,7 @@ class ProjectController extends Controller
     
             $project = new Project;
             $project->name = $validated['name'];
+            $project->admin_id = auth()->user()->id;
             return $project->save() ? json_encode(['data' => Project::find($project->id)]) : json_encode(['message' => 'failed']);
         } catch(\Exception $e)
         {
@@ -64,8 +65,8 @@ class ProjectController extends Controller
      */
     public function show($id)
     {
-        //
         $project = Project::find($id);
+
 
         if(! $project) {
             return json_encode(['message' => 'failed', 'data' => 'No project with this id.']);
@@ -92,10 +93,15 @@ class ProjectController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
         try {
             $project = Project::find($id);
+
             if($project) {
+                // Only the admin can update the name
+                if($project->admin_id != auth()->user()->id) {
+                    return response()->json(['data' => 'Not the project admin.'], 401);
+                }
+
                 $validated = $request->validate([
                     'name' => 'required|string|unique:projects,name,' . $id,
                 ]);
@@ -130,6 +136,11 @@ class ProjectController extends Controller
     {
         $project = Project::find($id);
         if($project) {
+            // Only the admin can archive the project
+            if($project->admin_id != auth()->user()->id) {
+                return response()->json(['data' => 'Not the project admin.'], 401);
+            }
+
             $project->archived = 1;
             
             return $project->save() ? json_encode(['data' => $project]) : json_encode(['message' => 'failed', 'data' => 'failed to archive project']);
@@ -145,6 +156,11 @@ class ProjectController extends Controller
         $data = '';
         $project = Project::find($id);
         if($project) {
+            // Only the admin can delete the project
+            if($project->admin_id != auth()->user()->id) {
+                return response()->json(['data' => 'Not the project admin.'], 401);
+            }
+
             $message =  $project->delete() ? '' : 'failed';
         } else {
             $message = 'failed';
