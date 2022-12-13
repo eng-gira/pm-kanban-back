@@ -27,7 +27,7 @@ class ProjectMemberController extends Controller
             return json_encode(['data' => ProjectMember::where('project_id', '=', $projectId)->orderBy('order')->get()]);
         } catch(\Exception $e)
         {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }
     }
 
@@ -52,7 +52,8 @@ class ProjectMemberController extends Controller
     {
         $member = ProjectMember::find($id);
         
-        return json_encode(['data' => $member]);
+        return !$member ? json_encode(['message' => 'failed', 'data' => 'No member with this id']) : 
+            json_encode(['data' => $member]);
     }
 
     /**
@@ -69,14 +70,16 @@ class ProjectMemberController extends Controller
 
     public function delete($id)
     {
+        $message = '';
         $data = '';
         $member = ProjectMember::find($id);
         if($member) {
-            $data =  $member->delete() ? 'Successfully deleted member' : 'failed to delete member';
+            $message =  $member->delete() ? '' : 'failed';
         } else {
-            $data = 'Member does not exist';
+            $message = 'failed';
+            $data = 'Member does not exist.';
         }
 
-        return json_encode(['data' => $data]);      
+        return json_encode(['message' => $message, 'data' => $data]);      
     }
 }

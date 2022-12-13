@@ -67,6 +67,10 @@ class ProjectController extends Controller
         //
         $project = Project::find($id);
 
+        if(! $project) {
+            return json_encode(['message' => 'failed', 'data' => 'No project with this id.']);
+        }
+
         $cols = Column::where('project_id', '=', $id)->orderBy('order')->get();
         // Inserting columns' tasks in the columns.
         foreach($cols as $col) {
@@ -137,14 +141,16 @@ class ProjectController extends Controller
 
     public function delete($id)
     {
+        $message = '';
         $data = '';
         $project = Project::find($id);
         if($project) {
-            $data =  $project->delete() ? 'Successfully deleted project' : 'failed to delete project';
+            $message =  $project->delete() ? '' : 'failed';
         } else {
-            $data = 'Project does not exist';
+            $message = 'failed';
+            $data = 'Project does not exist.';
         }
 
-        return json_encode(['data' => $data]);      
+        return json_encode(['message' => $message, 'data' => $data]);      
     }
 }

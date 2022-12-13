@@ -30,7 +30,7 @@ class TaskController extends Controller
             return json_encode(['data' => DB::table('tasks')->where('column_id', '=', $columnId)->orderBy('order')->get()]);
         } catch(\Exception $e)
         {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }
     }
 
@@ -79,7 +79,7 @@ class TaskController extends Controller
 
         } catch(\Exception $e)
         {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }   
     }
 
@@ -93,7 +93,8 @@ class TaskController extends Controller
     {
         $task = Task::find($id);
         
-        return json_encode(['data' => $task]);
+        return !$task ? json_encode(['message' => 'failed', 'data' => 'No task with this id.']) : 
+            json_encode(['data' => $task]);
     }
 
     /**
@@ -129,7 +130,7 @@ class TaskController extends Controller
 
         } catch(\Exception $e)
         {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }
     }
 
@@ -164,36 +165,10 @@ class TaskController extends Controller
                 }
                 $counter++;
             }
-
-            // $orderOfBeforeTask = floatval($validated['orderOfBeforeTask']);
-            // $orderOfAfterTask = floatval($validated['orderOfAfterTask']);
-
-            // if($orderOfAfterTask < 0 && $orderOfBeforeTask < 0) {
-            //     // The only element in the col
-            //     $task->order = '1';
-                
-            // }
-            // elseif($orderOfBeforeTask < 0 && $orderOfAfterTask > 0) {
-            //     // First element placement
-            //     $task->order = strval( ($orderOfAfterTask > 1) ? 1 : (0 + $orderOfAfterTask) / 2 ); 
-            // } elseif($orderOfAfterTask < 0 && $orderOfBeforeTask > 0) {
-            //     // Last element placement
-            //     $task->order = strval( intval($orderOfBeforeTask) + 1 ); 
-            // }
-
-            // // Column Changed too?
-            // if($task->column_id != $validated['targetColId']) {
-            //     $task->column_id = $validated['targetColId'];
-            // }
-
-            // if(! $task->save()) {
-            //     throw new \Exception('Failed to save relocated task.');
-            // }
-
             return json_encode(['data' => $tasksOrderInTargetCol]);
         }
         catch (\Exception $e) {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }
     }
 
@@ -222,7 +197,7 @@ class TaskController extends Controller
 
         } catch(\Exception $e)
         {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }        
     }
 }

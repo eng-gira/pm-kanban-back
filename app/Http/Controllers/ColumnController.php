@@ -73,7 +73,7 @@ class ColumnController extends Controller
 
         } catch(\Exception $e)
         {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }   
     }
 
@@ -87,7 +87,7 @@ class ColumnController extends Controller
     {
         $column = Column::find($id);
         
-        return json_encode(['data' => $column]);
+        return !$column ? json_encode(['message' => 'failed', 'data' => 'No column with that id']) : json_encode(['data' => $column]);
     }
 
     /**
@@ -122,7 +122,7 @@ class ColumnController extends Controller
 
         } catch(\Exception $e)
         {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }
     }
 
@@ -158,7 +158,7 @@ class ColumnController extends Controller
             return json_encode(['data' => $orderedCols]);
 
         } catch(\Exception $e) {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }
     }
 
@@ -187,7 +187,7 @@ class ColumnController extends Controller
 
         } catch(\Exception $e)
         {
-            return json_encode(['data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }        
     }
 }
