@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Column;
 use Illuminate\Http\Request;
 use App\Models\Project;
+use App\Models\ProjectMember;
 use App\Models\Task;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -66,15 +67,16 @@ class ProjectController extends Controller
         //
         $project = Project::find($id);
 
-        $cols = Column::where('project_id', '=', $id)->get();
+        $cols = Column::where('project_id', '=', $id)->orderBy('order')->get();
         // Inserting columns' tasks in the columns.
         foreach($cols as $col) {
             $col->tasks = DB::table('tasks')->where('column_id', '=', $col->id)->orderBy('order')->get();
         }
         
         $project->columns = $cols;
+        $project->members = DB::table('project_members')->where('project_id', '=', $id)->get()->pluck('user_id');
 
-        return json_encode(['data' => $project]) ;
+        return json_encode(['data' => $project]);
     }
 
     /**

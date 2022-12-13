@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Column;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ColumnController extends Controller
 {
@@ -25,7 +26,7 @@ class ColumnController extends Controller
     {
         //
         try {
-            return json_encode(['data' => Column::where('project_id', '=', $projectId)->get()]);
+            return json_encode(['data' => Column::where('project_id', '=', $projectId)->orderBy('order')->get()]);
         } catch(\Exception $e)
         {
             return json_encode(['data' => $e->getMessage()]);
@@ -47,10 +48,10 @@ class ColumnController extends Controller
             ]);
             
             $project = Project::find($projectId);
+            $projCols = Column::where('project_id', '=', $projectId)->orderBy('order', 'desc')->get(); // sorted for the usage later in 'order'
             if(! $project) {
                 throw new \Exception('Project does not exist');
             } else {
-                $projCols = Column::where('project_id', '=', $projectId)->get();
                 $countProjCols = count($projCols);
                 if ($countProjCols > 49) {
                     throw new \Exception('Reached limit of columns per project. Can not exceed ' . $countProjCols . ' columns.');
@@ -60,6 +61,7 @@ class ColumnController extends Controller
             $column = new Column;
             $column->name = $validated['name'];
             $column->project_id = $projectId;
+            $column->order = count($projCols) > 0 ? intval( ($projCols[0])->order ) + 1 : 0; // first in desc has the highest order val.
             if(! $column->save())
             {
                 throw new \Exception ('Failed');
@@ -120,6 +122,42 @@ class ColumnController extends Controller
 
         } catch(\Exception $e)
         {
+            return json_encode(['data' => $e->getMessage()]);
+        }
+    }
+
+    public function changeOrder(Request $request, $projectId) {
+        try {
+            $validated = $request->validate([
+                'orderedCols' => 'required|array'
+            ]);
+
+            $projectCols = DB::table('columns')->where('project_id', '=', $projectId)->get();
+            $orderedCols = $validated['orderedCols'];
+
+            if(count($projectCols) != count($orderedCols)) throw new \Exception('All cols of the project must be included.');
+
+            $counter = 0;
+            foreach($orderedCols as $colId) {
+                $column = Column::find($colId);
+                if(! $column) {
+                    throw new \Exception('No column with id ' . $colId);
+                } elseif($column->project_id != $projectId) {
+                    throw new \Exception('Columns should all be part of the same project');
+                }
+
+                $column->order = $counter;
+                if(! $column->save())
+                {
+                    throw new \Exception('Failed to save updated column.');
+                }
+
+                $counter++;
+            }
+
+            return json_encode(['data' => $orderedCols]);
+
+        } catch(\Exception $e) {
             return json_encode(['data' => $e->getMessage()]);
         }
     }

@@ -40,6 +40,7 @@ Route::get('projects/{projectId}/columns', [ColumnController::class, 'index']);
 Route::get('columns/{id}', [ColumnController::class, 'show']);
 Route::post('projects/{projectId}/columns', [ColumnController::class, 'store']);
 Route::post('columns/{id}', [ColumnController::class, 'update']);
+Route::post('projects/{projectId}/columns/changeOrder', [ColumnController::class, 'changeOrder']);
 Route::delete('columns/{id}', [ColumnController::class, 'delete']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
