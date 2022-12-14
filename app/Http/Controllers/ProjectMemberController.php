@@ -2,17 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
 use App\Models\ProjectMember;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ProjectMemberController extends Controller
 {
     public function __construct()
     {
-        /**
-         * @todo uncomment after testing
-         */
-        // $this->middleware('auth:api', ['except' => ['index', 'show', 'archive']]);
+        $this->middleware('auth:api');
     }
 
     /**
@@ -24,7 +23,7 @@ class ProjectMemberController extends Controller
     {
         //
         try {
-            return json_encode(['data' => ProjectMember::where('project_id', '=', $projectId)->orderBy('order')->get()]);
+            return json_encode(['data' => ProjectMember::where('project_id', '=', $projectId)->get()]);
         } catch(\Exception $e)
         {
             return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
@@ -37,49 +36,88 @@ class ProjectMemberController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, $projectId)
     {
-        
-    }
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email|exists:users,email'
+            ]);
+            $project = Project::find($projectId);
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        $member = ProjectMember::find($id);
-        
-        return !$member ? json_encode(['message' => 'failed', 'data' => 'No member with this id']) : 
-            json_encode(['data' => $member]);
-    }
+            if(!$project) {
+                return json_encode(['message' => 'failed', 'data' => 'Project does not exist.']);
+            }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
+            if($project->admin_id != auth()->user()->id) {
+                return response()->json(['data' => 'Not the project admin.'], 401);
+            }
 
-    public function delete($id)
-    {
-        $message = '';
-        $data = '';
-        $member = ProjectMember::find($id);
-        if($member) {
-            $message =  $member->delete() ? '' : 'failed';
-        } else {
-            $message = 'failed';
-            $data = 'Member does not exist.';
+            $newMemberEmail = $validated['email'];
+            $newMember = User::where('email', '=', $newMemberEmail)->first();
+            
+            $projectMembers = ProjectMember::where('project_id', '=', $projectId)->get();
+            
+            
+            foreach($projectMembers as $projectMember)
+            {
+                if($projectMember->user_id == $newMember->id) {
+
+                    throw new \Exception('User is already a member.');
+                }
+            }
+
+            $projectMemberRecord = new ProjectMember;
+            $projectMemberRecord->user_id = $newMember->id;
+            $projectMemberRecord->project_id = $projectId;
+            $projectMemberRecord->user_email = $newMemberEmail;
+
+            if(!$projectMemberRecord->save()) {
+                throw new \Exception();
+            }
+
+            return json_encode(['data' => $projectMemberRecord]);
+
+        } catch(\Exception $e) {
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }
+        
+    }
 
-        return json_encode(['message' => $message, 'data' => $data]);      
+    public function delete(Request $request, $projectId)
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email|exists:users,email'
+            ]);
+            $project = Project::find($projectId);
+
+            if(!$project) {
+                return json_encode(['message' => 'failed', 'data' => 'Project does not exist.']);
+            }
+
+            if($project->admin_id != auth()->user()->id) {
+                return response()->json(['data' => 'Not the project admin.'], 401);
+            }
+
+            $memberToDelEmail = $validated['email'];
+
+            if($memberToDelEmail == auth()->user()->email) {
+                throw new \Exception('Admin cannot be deleted');
+            }
+
+            $memberToDel = User::where('email', '=', $memberToDelEmail)->first();
+            
+            $recordToDel = ProjectMember::where('project_id', '=', $projectId)->where('user_id', '=', $memberToDel->id)->first();
+
+            if(!$recordToDel->delete()) {
+                throw new \Exception();
+            }
+
+            return json_encode(['data' => 'Deleted']);
+
+        } catch(\Exception $e) {
+            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
+        }
+                
     }
 }

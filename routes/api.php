@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -32,7 +33,6 @@ Route::get('/archive/projects/', [ProjectController::class, 'archive']);
 Route::post('/projects/addToArchive/{id}', [ProjectController::class, 'addToArchive']);
 Route::delete('/projects/{id}', [ProjectController::class, 'delete']);
 
-
 // Task
 Route::get('columns/{columnId}/tasks', [TaskController::class, 'index']);
 Route::get('tasks/{id}', [TaskController::class, 'show']);
@@ -49,6 +49,7 @@ Route::post('columns/{id}', [ColumnController::class, 'update']);
 Route::post('projects/{projectId}/columns/changeOrder', [ColumnController::class, 'changeOrder']);
 Route::delete('columns/{id}', [ColumnController::class, 'delete']);
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Project Member
+Route::get('projects/{projectId}/getMembers', [ProjectMemberController::class, 'index']);
+Route::post('projects/{projectId}/addMember', [ProjectMemberController::class, 'store']);
+Route::post('projects/{projectId}/removeMember', [ProjectMemberController::class, 'delete']);

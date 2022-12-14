@@ -26,7 +26,7 @@ class AuthController extends Controller
             $user->password = bcrypt($validated['password']); // must store encrypted (bycrypted) pw for Auth::attempt to work.
 
             if($user->save()) {
-                $token = Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']]);
+                $token = Auth::claims(['user' => $user])->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
 
                 return $this->respondWithToken($token);
             }
@@ -39,11 +39,13 @@ class AuthController extends Controller
     public function login(Request $request) {
         try {
             $validated = $request->validate([
-                'email' => 'required|email',
+                'email' => 'required|email|exists:users,email',
                 'password' => 'required'
             ]);
 
-            $token = Auth::attempt($validated);
+            $user = User::where('email', '=', $validated['email'])->first();
+
+            $token = Auth::claims(['user' => $user])->attempt($validated);
 
             if(! $token) {
                 return response()->json(['message' => 'failed', 'data' => 'Unauthorized'], 401);
@@ -78,7 +80,7 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => Auth::factory()->getTTL() * 60
+            'expires_in' => Auth::factory()->getTTL() * 60,
         ]);
     }
 }

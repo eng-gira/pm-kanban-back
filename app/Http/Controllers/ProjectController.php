@@ -50,7 +50,24 @@ class ProjectController extends Controller
             $project = new Project;
             $project->name = $validated['name'];
             $project->admin_id = auth()->user()->id;
-            return $project->save() ? json_encode(['data' => Project::find($project->id)]) : json_encode(['message' => 'failed']);
+            if(!$project->save()) {
+
+                throw new \Exception();
+            } 
+
+            // Add the admin to the project members
+            $projectMember = new ProjectMember;
+            $projectMember->user_id = auth()->user()->id;
+            $projectMember->user_email = auth()->user()->email;
+            $projectMember->project_id = $project->id;
+            if(!$projectMember->save()) {
+                $project->delete();
+
+                throw new \Exception('Failed to add admin to project members. Project deleted.');
+            }
+
+            return json_encode(['data' => $project]);
+            
         } catch(\Exception $e)
         {
             return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
@@ -79,7 +96,7 @@ class ProjectController extends Controller
         }
         
         $project->columns = $cols;
-        $project->members = DB::table('project_members')->where('project_id', '=', $id)->get()->pluck('user_id');
+        $project->members = DB::table('project_members')->where('project_id', '=', $id)->get();
 
         return json_encode(['data' => $project]);
     }
