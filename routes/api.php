@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectMemberController;
+use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -53,3 +54,10 @@ Route::delete('columns/{id}', [ColumnController::class, 'delete']);
 Route::get('projects/{projectId}/getMembers', [ProjectMemberController::class, 'index']);
 Route::post('projects/{projectId}/addMember', [ProjectMemberController::class, 'store']);
 Route::post('projects/{projectId}/removeMember', [ProjectMemberController::class, 'delete']);
+
+// Task Comment
+Route::get('/tasks/{taskId}/comments', [TaskCommentController::class, 'index']);
+Route::get('/comments/{id}', [TaskCommentController::class, 'show']);
+Route::post('/tasks/{taskId}/comments', [TaskCommentController::class, 'store']);
+Route::post('/comments/{id}', [TaskCommentController::class, 'update']);
+Route::delete('/comments/{id}', [TaskCommentController::class, 'delete']);

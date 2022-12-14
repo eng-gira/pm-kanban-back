@@ -6,6 +6,7 @@ use App\Models\Column;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\Task;
+use App\Models\TaskComment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,10 +14,7 @@ class TaskController extends Controller
 {
     public function __construct()
     {
-        /**
-         * @todo Uncomment after building and testing.
-         */
-        // $this->middleware('auth:api', ['except' => ['index', 'show']]);
+        $this->middleware('auth:api', ['except' => ['index', 'show']]);
     }
 
     /**
@@ -103,8 +101,9 @@ class TaskController extends Controller
             return response()->json(['data' => $e->getMessage()], 401);
         }
 
-        return !$task ? json_encode(['message' => 'failed', 'data' => 'No task with this id.']) : 
-            json_encode(['data' => $task]);
+        $task->comments = TaskComment::where('task_id', '=', $id)->get();
+
+        return json_encode(['data' => $task]);
     }
 
     /**
