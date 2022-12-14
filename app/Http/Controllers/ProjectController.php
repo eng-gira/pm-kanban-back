@@ -15,9 +15,6 @@ class ProjectController extends Controller
 {
     public function __construct()
     {
-        /**
-         * @todo uncomment after testing
-         */
         $this->middleware('auth:api');
     }
 
@@ -29,7 +26,17 @@ class ProjectController extends Controller
     public function index()
     {
         //
-        return Project::where('archived', '<>', 1)->get();
+        $accessibleProjects = ProjectMember::where('user_id', '=', auth()->user()->id)->get();
+        $notArchivedOnes = [];
+        foreach($accessibleProjects as $aP) {
+            $proj = Project::find($aP->project_id);
+            if($proj->archived == 0)
+            {
+                array_push($notArchivedOnes, $proj);
+            }
+        }
+
+        return json_encode(['data' => $notArchivedOnes]);
     }
 
     /**
@@ -89,6 +96,12 @@ class ProjectController extends Controller
             return json_encode(['message' => 'failed', 'data' => 'No project with this id.']);
         }
 
+        try {
+            $this->canAccessProject($project);
+        } catch(\Exception $e) {
+            return response()->json(['data' => $e->getMessage()], 401);
+        }
+
         $cols = Column::where('project_id', '=', $id)->orderBy('order')->get();
         // Inserting columns' tasks in the columns.
         foreach($cols as $col) {
@@ -143,7 +156,17 @@ class ProjectController extends Controller
      * Get archived projects
      */
     public function archive(){
-        return json_encode(['data' => DB::table('projects')->where('archived', '=', 1)->get() ]);
+        $accessibleProjects = ProjectMember::where('user_id', '=', auth()->user()->id)->get();
+        $archivedOnes = [];
+        foreach($accessibleProjects as $aP) {
+            $proj = Project::find($aP->project_id);
+            if($proj->archived == 1)
+            {
+                array_push($archivedOnes, $proj);
+            }
+        }
+
+        return json_encode(['data' => $archivedOnes ]);
     }
 
     /**
@@ -185,5 +208,17 @@ class ProjectController extends Controller
         }
 
         return json_encode(['message' => $message, 'data' => $data]);      
+    }
+
+    private function canAccessProject($project) {
+        if($project->admin_id == auth()->user()->id) return true;
+
+        $projectMembers = ProjectMember::where('project_id', '=', $project->id)->get();
+
+        foreach($projectMembers as $member) {
+            if($member->user_id == auth()->user()->id) return true;
+        }
+        
+        throw new \Exception('Can not access project');        
     }
 }

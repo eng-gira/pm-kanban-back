@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Column;
 use App\Models\Project;
+use App\Models\ProjectMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -11,10 +12,7 @@ class ColumnController extends Controller
 {
     public function __construct()
     {
-        /**
-         * @todo Uncomment after building and testing.
-         */
-        // $this->middleware('auth:api', ['except' => ['index', 'show']]);
+        $this->middleware('auth:api');
     }
 
     /**
@@ -26,6 +24,8 @@ class ColumnController extends Controller
     {
         //
         try {
+            $this->checkIfCanAccessColumn(-1, $projectId);
+
             return json_encode(['data' => Column::where('project_id', '=', $projectId)->orderBy('order')->get()]);
         } catch(\Exception $e)
         {
@@ -49,6 +49,8 @@ class ColumnController extends Controller
             
             $project = Project::find($projectId);
             $projCols = Column::where('project_id', '=', $projectId)->orderBy('order', 'desc')->get(); // sorted for the usage later in 'order'
+            
+            
             if(! $project) {
                 throw new \Exception('Project does not exist');
             } else {
@@ -57,7 +59,10 @@ class ColumnController extends Controller
                     throw new \Exception('Reached limit of columns per project. Can not exceed ' . $countProjCols . ' columns.');
                 }
             }
-    
+            
+            $this->checkIfCanAccessColumn(-1, $projectId);
+
+
             $column = new Column;
             $column->name = $validated['name'];
             $column->project_id = $projectId;
@@ -86,7 +91,12 @@ class ColumnController extends Controller
     public function show($id)
     {
         $column = Column::find($id);
-        
+        try {
+            $this->checkIfCanAccessColumn($id);
+        } catch (\Exception $e) {
+            return response()->json(['data' => $e->getMessage()], 401);
+        }
+
         return !$column ? json_encode(['message' => 'failed', 'data' => 'No column with that id']) : json_encode(['data' => $column]);
     }
 
@@ -111,6 +121,8 @@ class ColumnController extends Controller
                 throw new \Exception('No column with id ' . $id);
             }
 
+            $this->checkIfCanAccessColumn($id);
+
             $column->name = $validated['name'];
             
             if(! $column->save())
@@ -131,6 +143,9 @@ class ColumnController extends Controller
             $validated = $request->validate([
                 'orderedCols' => 'required|array'
             ]);
+
+            //
+            $this->checkIfCanAccessColumn(-1, $projectId);
 
             $projectCols = DB::table('columns')->where('project_id', '=', $projectId)->get();
             $orderedCols = $validated['orderedCols'];
@@ -178,6 +193,8 @@ class ColumnController extends Controller
                 throw new \Exception('No column with id ' . $id);
             }
 
+            $this->checkIfCanAccessColumn($id);
+
             if(! $column->destroy($id))
             {
                 throw new \Exception('Failed to delete column.');
@@ -189,5 +206,24 @@ class ColumnController extends Controller
         {
             return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }        
+    }
+
+    private function checkIfCanAccessColumn($columnId = -1, $projectId = -1) {
+        if($projectId == -1)
+        {
+            $col = Column::find($columnId);
+            if(!$col) {
+                throw new \Exception('Can not access column');
+            }
+
+            $projectId = $col->project_id;
+        }
+        $projectMembers = ProjectMember::where('project_id', '=', $projectId)->get();
+
+        foreach($projectMembers as $member) {
+            if($member->user_id == auth()->user()->id) return true;
+        }
+        
+        throw new \Exception('Can not access column');
     }
 }

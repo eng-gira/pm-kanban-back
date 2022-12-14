@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Column;
 use App\Models\Project;
+use App\Models\ProjectMember;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,8 @@ class TaskController extends Controller
     {
         //
         try {
+            $this->checkIfCanAccessTask($columnId);
+
             return json_encode(['data' => DB::table('tasks')->where('column_id', '=', $columnId)->orderBy('order')->get()]);
         } catch(\Exception $e)
         {
@@ -60,6 +63,8 @@ class TaskController extends Controller
                 }
             }
 
+            $this->checkIfCanAccessTask($columnId);
+
             $task = new Task;
             $task->name = $validated['name'];
             $task->description = $validated['description'] ?? '';
@@ -92,7 +97,12 @@ class TaskController extends Controller
     public function show($id)
     {
         $task = Task::find($id);
-        
+        try {
+            $this->checkIfCanAccessTask($task->column_id);
+        } catch (\Exception $e) {
+            return response()->json(['data' => $e->getMessage()], 401);
+        }
+
         return !$task ? json_encode(['message' => 'failed', 'data' => 'No task with this id.']) : 
             json_encode(['data' => $task]);
     }
@@ -118,6 +128,8 @@ class TaskController extends Controller
                 throw new \Exception('No task with id ' . $id);
             }
 
+            $this->checkIfCanAccessTask($task->column_id);
+
             $task->name = $validated['name'];
             $task->description = $validated['description'] ?? $task->description;
             
@@ -142,11 +154,16 @@ class TaskController extends Controller
                 // 'orderOfAfterTask' => '',
                 'targetColId' => 'required|integer'
             ]);
+            
+            $task = Task::find($id);
 
-            if(! Task::find($id)) {
+            if(! $task) {
                 throw new \Exception('No task with id ' . $id . ' was found.');
             }
             
+            $this->checkIfCanAccessTask($task->column_id);
+
+
             $targetCol = Column::find($validated['targetColId']);
             if(! $targetCol) {
                 throw new \Exception('No col with id ' . $validated['targetColId'] . ' was found.');
@@ -188,6 +205,8 @@ class TaskController extends Controller
                 throw new \Exception('No task with id ' . $id);
             }
 
+            $this->checkIfCanAccessTask($task->column_id);
+
             if(! $task->destroy($id))
             {
                 throw new \Exception('Failed to delete task.');
@@ -199,5 +218,23 @@ class TaskController extends Controller
         {
             return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
         }        
+    }
+
+    
+    private function checkIfCanAccessTask($taskColId) {
+        $col = Column::find($taskColId);
+        if(!$col) {
+            throw new \Exception('Can not access task');
+        }
+
+        $projectId = $col->project_id;
+        
+        $projectMembers = ProjectMember::where('project_id', '=', $projectId)->get();
+
+        foreach($projectMembers as $member) {
+            if($member->user_id == auth()->user()->id) return true;
+        }
+        
+        throw new \Exception('Can not access task');
     }
 }
