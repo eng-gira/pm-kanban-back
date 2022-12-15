@@ -26,9 +26,10 @@ class AuthController extends Controller
             $user->password = bcrypt($validated['password']); // must store encrypted (bycrypted) pw for Auth::attempt to work.
 
             if($user->save()) {
-                $token = Auth::claims(['user' => $user])->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
-
-                return $this->respondWithToken($token);
+                $accessToken = Auth::setTTL(1)->claims(['user' => $user])->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
+                $refreshToken = Auth::setTTL(30)->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
+ 
+                return $this->respondWithTwoTokens($accessToken, $refreshToken);
             }
 
         } catch(\Exception $e) {
@@ -45,13 +46,17 @@ class AuthController extends Controller
 
             $user = User::where('email', '=', $validated['email'])->first();
 
-            $token = Auth::claims(['user' => $user])->attempt($validated);
+            $accessToken = Auth::setTTL(1)->claims(['user' => $user])->attempt($validated);
 
-            if(! $token) {
+            // Override the token ttl
+            // $token = auth()->setTTL(7200)->attempt($credentials);
+            $refreshToken = Auth::setTTL(30)->attempt($validated);
+
+            if(! $accessToken || ! $refreshToken) {
                 return response()->json(['message' => 'failed', 'data' => 'Unauthorized'], 401);
             }
             
-            return $this->respondWithToken($token);
+            return $this->respondWithTwoTokens($accessToken, $refreshToken);
 
         } catch(\Exception $e) {
             return json_encode(['message'=> 'failed', 'data' => $e->getMessage()]);
@@ -72,15 +77,20 @@ class AuthController extends Controller
 
     public function refresh()
     {
-        return $this->respondWithToken(Auth::refresh());
+        return $this->respondWithTwoTokens(Auth::refresh());
     }
 
-    protected function respondWithToken($token)
+    protected function respondWithTwoTokens($accessToken, $refreshToken = null)
     {
-        return response()->json([
-            'access_token' => $token,
+        $data = [
+            'access_token' => $accessToken,
             'token_type' => 'bearer',
-            'expires_in' => Auth::factory()->getTTL() * 60,
-        ]);
+        ];
+
+        if($refreshToken !== null) {
+            $data['refresh_token'] = $refreshToken;
+        }
+
+        return response()->json($data);
     }
 }
