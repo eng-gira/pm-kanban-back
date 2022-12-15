@@ -67,6 +67,7 @@ class TaskController extends Controller
             $task->name = $validated['name'];
             $task->description = $validated['description'] ?? '';
             $task->column_id = $columnId;
+            $task->project_id = $column->project_id;
 
             // last in asc is the first in desc
             $lastTask = DB::table('tasks')->where('column_id', '=', $columnId)->orderBy('order', 'desc')->first();
@@ -82,7 +83,7 @@ class TaskController extends Controller
 
         } catch(\Exception $e)
         {
-            return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
+            return json_encode(['message' => 'failed', 'data' => $e->getLine() . ": " . $e->getMessage()]);
         }   
     }
 
@@ -120,6 +121,7 @@ class TaskController extends Controller
             $validated = $request->validate([
                 'name' => 'required|min:3',
                 'description' => '',
+                'assignee_id' => 'integer|exists:users,id'
             ]);
             $task = Task::find($id);
 
@@ -128,6 +130,11 @@ class TaskController extends Controller
             }
 
             $this->checkIfCanAccessTask($task->column_id);
+
+            if($validated['assignee_id'] != null) {
+                $this->checkIfCanAccessTask($task->column_id, null, $validated['assignee_id']);
+                $task->assignee_id = $validated['assignee_id'];
+            }
 
             $task->name = $validated['name'];
             $task->description = $validated['description'] ?? $task->description;
@@ -219,19 +226,21 @@ class TaskController extends Controller
         }        
     }
 
-    
-    private function checkIfCanAccessTask($taskColId) {
-        $col = Column::find($taskColId);
-        if(!$col) {
-            throw new \Exception('Can not access task');
-        }
+    /**
+     * Check if member of the project.
+     */
+    private function checkIfCanAccessTask($columnId, $userId = null) {
+        $column = Column::find($columnId);
 
-        $projectId = $col->project_id;
+        $projectId = $column->project_id;
         
+
         $projectMembers = ProjectMember::where('project_id', '=', $projectId)->get();
 
+        $userIdToCheck = $userId === null ? auth()->user()->id : $userId;
+
         foreach($projectMembers as $member) {
-            if($member->user_id == auth()->user()->id) return true;
+            if($member->user_id == $userIdToCheck) return true;
         }
         
         throw new \Exception('Can not access task');

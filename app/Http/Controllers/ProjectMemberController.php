@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectMember;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -111,6 +112,15 @@ class ProjectMemberController extends Controller
 
             if(!$recordToDel->delete()) {
                 throw new \Exception();
+            }
+
+            // Remove from any task in proj.
+            $tasksWhereTheRemovedMemberIn  = Task::where('project_id', '=', $projectId)->where('assignee_id', '=', $memberToDel->id)->get();
+            foreach($tasksWhereTheRemovedMemberIn as $t) {
+                $t->assignee_id = null;
+                if(!$t->save()) {
+                    throw new \Exception('Failed to update assignee id of a task.');
+                }
             }
 
             return json_encode(['data' => 'Deleted']);
