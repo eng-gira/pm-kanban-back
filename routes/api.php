@@ -33,6 +33,7 @@ Route::post('/projects', [ProjectController::class, 'store']);
 Route::post('/projects/{id}', [ProjectController::class, 'update']);
 Route::get('/archive/projects/', [ProjectController::class, 'archive']);
 Route::post('/projects/addToArchive/{id}', [ProjectController::class, 'addToArchive']);
+Route::post('/projects/removeFromArchive/{id}', [ProjectController::class, 'removeFromArchive']);
 Route::delete('/projects/{id}', [ProjectController::class, 'delete']);
 
 // Task

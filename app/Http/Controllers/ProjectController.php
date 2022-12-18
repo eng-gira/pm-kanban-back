@@ -189,6 +189,23 @@ class ProjectController extends Controller
         return json_encode(['message' => 'failed', ' data' => 'Project does not exist']);
     }
 
+    public function removeFromArchive($id)
+    {
+        $project = Project::find($id);
+        if($project) {
+            // Only the admin can archive the project
+            if($project->admin_id != auth()->user()->id) {
+                return response()->json(['data' => 'Not the project admin.'], 401);
+            }
+
+            $project->archived = 0;
+            
+            return $project->save() ? json_encode(['data' => $project]) : json_encode(['message' => 'failed', 'data' => 'failed to archive project']);
+        }    //
+
+        return json_encode(['message' => 'failed', ' data' => 'Project does not exist']);
+    }
+
 
     public function delete($id)
     {
