@@ -93,7 +93,7 @@ class ProjectController extends Controller
 
 
         if(! $project) {
-            return json_encode(['message' => 'failed', 'data' => 'No project with this id.']);
+            return response()->json(['message' => 'failed', 'data' => 'No project with this id.'], 404);
         }
 
         try {
@@ -142,7 +142,8 @@ class ProjectController extends Controller
             }
             else 
             {
-                throw new \Exception('Project does not exit');
+                return response()->json(['message' => 'failed', 'data' => 'No project with this id.'], 404);
+                // throw new \Exception('Project does not exit');
             }
         } catch(\Exception $e)
         {
@@ -186,7 +187,7 @@ class ProjectController extends Controller
             return $project->save() ? json_encode(['data' => $project]) : json_encode(['message' => 'failed', 'data' => 'failed to archive project']);
         }    //
 
-        return json_encode(['message' => 'failed', ' data' => 'Project does not exist']);
+        return response()->json(['message' => 'failed', 'data' => 'No project with this id.'], 404);
     }
 
     public function removeFromArchive($id)
@@ -203,7 +204,7 @@ class ProjectController extends Controller
             return $project->save() ? json_encode(['data' => $project]) : json_encode(['message' => 'failed', 'data' => 'failed to archive project']);
         }    //
 
-        return json_encode(['message' => 'failed', ' data' => 'Project does not exist']);
+        return response()->json(['message' => 'failed', 'data' => 'No project with this id.'], 404);
     }
 
 
@@ -220,8 +221,7 @@ class ProjectController extends Controller
 
             $message =  $project->delete() ? '' : 'failed';
         } else {
-            $message = 'failed';
-            $data = 'Project does not exist.';
+            return response()->json(['message' => 'failed', 'data' => 'No project with this id.'], 404);
         }
 
         return json_encode(['message' => $message, 'data' => $data]);      
