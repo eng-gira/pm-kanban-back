@@ -131,7 +131,7 @@ class TaskController extends Controller
 
             $this->checkIfCanAccessTask($task->column_id);
 
-            if($validated['assignee_id'] != null) {
+            if(isset($validated['assignee_id'])) {
                 $this->checkIfCanAccessTask($task->column_id, null, $validated['assignee_id']);
                 $task->assignee_id = $validated['assignee_id'];
             }
