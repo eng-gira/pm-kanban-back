@@ -24,7 +24,10 @@ class ProjectMemberController extends Controller
     {
         //
         try {
-            return json_encode(['data' => ProjectMember::where('project_id', '=', $projectId)->get()]);
+            $members = ProjectMember::where('project_id', '=', $projectId)->get();
+            foreach($members as $member) $member['user_data'] = User::find($member['user_id']);
+
+            return json_encode(['data' => $members]);
         } catch(\Exception $e)
         {
             return json_encode(['message' => 'failed', 'data' => $e->getMessage()]);
