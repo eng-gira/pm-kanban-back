@@ -3,12 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Tymon\JWTAuth\Exceptions\TokenExpiredException;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
@@ -30,10 +26,9 @@ class AuthController extends Controller
             $user->password = bcrypt($validated['password']); // must store encrypted (bycrypted) pw for Auth::attempt to work.
 
             if($user->save()) {
-                $accessToken = Auth::setTTL(10)->claims(['user' => $user])->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
-                $refreshToken = Auth::setTTL(30)->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
+                $accessToken = Auth::claims(['user' => $user])->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
  
-                return $this->respondWithTwoTokens($accessToken, $refreshToken);
+                return $this->respondWithToken($accessToken);
             }
 
         } catch(\Exception $e) {
@@ -50,16 +45,13 @@ class AuthController extends Controller
 
             $user = User::where('email', '=', $validated['email'])->first();
 
-            $accessToken = Auth::setTTL(10)->claims(['user' => $user])->attempt($validated);
-
-            // Override the token ttl
-            $refreshToken = Auth::setTTL(30)->attempt($validated);
+            $accessToken = Auth::claims(['user' => $user])->attempt($validated);
 
             if(! $accessToken) {
                 return response()->json(['message' => 'failed', 'data' => 'Unauthorized'], 401);
             }
             
-            return $this->respondWithTwoTokens($accessToken, $refreshToken);
+            return $this->respondWithToken($accessToken);
 
         } catch(\Exception $e) {
             return json_encode(['message'=> 'failed', 'data' => $e->getMessage()]);
@@ -80,39 +72,15 @@ class AuthController extends Controller
 
     public function refresh()
     {
-        $authHeader = apache_request_headers()['ExpTok'] ?? false;
-
-        if($authHeader == false) { 
-            echo response()->json(['data' => 'no ExpTok!'], 401);
-            return false;
-        }
-        
-        $expToken = $authHeader;
-        try {
-            // $token = JWTAuth::getToken();
-            // $payload = JWTAuth::getPayload($token)->toArray();
-            // return json_encode(['payload' => $payload, 'user' => $payload['user'], 'id' => $payload['user']['id']]);
-
-            return $this->respondWithTwoTokens(Auth::refresh($expToken));
-
-        } catch(TokenExpiredException $e) {
-            return response()->json(['data' => 'Token expired: ' . $e->getMessage()], 401);
-        } catch(Exception $e) {
-            return response()->json(['data' => $e->getMessage()], 401);
-        }
-
+        return $this->respondWithToken(Auth::refresh());
     }
 
-    protected function respondWithTwoTokens($accessToken, $refreshToken = null)
+    protected function respondWithToken($accessToken)
     {
         $data = [
             'access_token' => $accessToken,
             'token_type' => 'bearer',
         ];
-        
-        if($refreshToken !== null) {
-            $data['refresh_token'] = $refreshToken;
-        }
 
         return response()->json($data);
     }
