@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-$prefix = env('APP_ENV') == 'production' ? $prefix . '/project-manager/api' : '/api';
+$prefix = env('APP_ENV', 'production') == 'production' ? $prefix . '/project-manager/api' : '/api';
 // Auth
 Route::post($prefix . '/register', [AuthController::class, 'register']);
 Route::post($prefix . '/login', [AuthController::class, 'login']);
