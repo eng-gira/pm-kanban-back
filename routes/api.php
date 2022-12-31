@@ -38,7 +38,7 @@ Route::delete($prefix . '/projects/{id}', [ProjectController::class, 'delete']);
 
 // Task
 Route::get($prefix . 'columns/{columnId}/tasks', [TaskController::class, 'index']);
-Route::get($prefix . 'tasks/{id}', [TaskController::class, 'show']);
+Route::get($prefix . '/tasks/{id}', [TaskController::class, 'show']);
 Route::post($prefix . '/columns/{columnId}/tasks', [TaskController::class, 'store']);
 Route::post($prefix . '/tasks/{id}', [TaskController::class, 'update']);
 Route::post($prefix . '/tasks/{id}/relocate', [TaskController::class, 'relocate']);
