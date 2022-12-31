@@ -30,7 +30,6 @@ class RouteServiceProvider extends ServiceProvider
 
         $this->routes(function () {
             Route::middleware('api')
-                ->prefix('api' . (env('APP_ENV') == 'production' ? '/project-manager' : ''))
                 ->group(base_path('routes/api.php'));
 
             Route::middleware('web')

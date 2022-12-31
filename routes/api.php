@@ -19,47 +19,47 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
+$prefix = env('APP_ENV') == 'production' ? $prefix . '/project-manager/api' : '/api';
 // Auth
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/refresh', [AuthController::class, 'refresh']);
-Route::post('/logout', [AuthController::class, 'logout']);
+Route::post($prefix . '/register', [AuthController::class, 'register']);
+Route::post($prefix . '/login', [AuthController::class, 'login']);
+Route::post($prefix . '/refresh', [AuthController::class, 'refresh']);
+Route::post($prefix . '/logout', [AuthController::class, 'logout']);
 
 // Project
-Route::get('/projects', [ProjectController::class, 'index']);
-Route::get('/projects/{id}', [ProjectController::class, 'show']);
-Route::post('/projects', [ProjectController::class, 'store']);
-Route::post('/projects/{id}', [ProjectController::class, 'update']);
-Route::get('/archive/projects/', [ProjectController::class, 'archive']);
-Route::post('/projects/addToArchive/{id}', [ProjectController::class, 'addToArchive']);
-Route::post('/projects/removeFromArchive/{id}', [ProjectController::class, 'removeFromArchive']);
-Route::delete('/projects/{id}', [ProjectController::class, 'delete']);
+Route::get($prefix . '/projects', [ProjectController::class, 'index']);
+Route::get($prefix . '/projects/{id}', [ProjectController::class, 'show']);
+Route::post($prefix . '/projects', [ProjectController::class, 'store']);
+Route::post($prefix . '/projects/{id}', [ProjectController::class, 'update']);
+Route::get($prefix . '/archive/projects/', [ProjectController::class, 'archive']);
+Route::post($prefix . '/projects/addToArchive/{id}', [ProjectController::class, 'addToArchive']);
+Route::post($prefix . '/projects/removeFromArchive/{id}', [ProjectController::class, 'removeFromArchive']);
+Route::delete($prefix . '/projects/{id}', [ProjectController::class, 'delete']);
 
 // Task
-Route::get('columns/{columnId}/tasks', [TaskController::class, 'index']);
-Route::get('tasks/{id}', [TaskController::class, 'show']);
-Route::post('columns/{columnId}/tasks', [TaskController::class, 'store']);
-Route::post('tasks/{id}', [TaskController::class, 'update']);
-Route::post('tasks/{id}/relocate', [TaskController::class, 'relocate']);
-Route::delete('tasks/{id}', [TaskController::class, 'delete']);
+Route::get($prefix . 'columns/{columnId}/tasks', [TaskController::class, 'index']);
+Route::get($prefix . 'tasks/{id}', [TaskController::class, 'show']);
+Route::post($prefix . '/columns/{columnId}/tasks', [TaskController::class, 'store']);
+Route::post($prefix . '/tasks/{id}', [TaskController::class, 'update']);
+Route::post($prefix . '/tasks/{id}/relocate', [TaskController::class, 'relocate']);
+Route::delete($prefix . '/tasks/{id}', [TaskController::class, 'delete']);
 
 // Column
-Route::get('projects/{projectId}/columns', [ColumnController::class, 'index']);
-Route::get('columns/{id}', [ColumnController::class, 'show']);
-Route::post('projects/{projectId}/columns', [ColumnController::class, 'store']);
-Route::post('columns/{id}', [ColumnController::class, 'update']);
-Route::post('projects/{projectId}/columns/changeOrder', [ColumnController::class, 'changeOrder']);
-Route::delete('columns/{id}', [ColumnController::class, 'delete']);
+Route::get($prefix . '/projects/{projectId}/columns', [ColumnController::class, 'index']);
+Route::get($prefix . '/columns/{id}', [ColumnController::class, 'show']);
+Route::post($prefix . '/projects/{projectId}/columns', [ColumnController::class, 'store']);
+Route::post($prefix . '/columns/{id}', [ColumnController::class, 'update']);
+Route::post($prefix . '/projects/{projectId}/columns/changeOrder', [ColumnController::class, 'changeOrder']);
+Route::delete($prefix . '/columns/{id}', [ColumnController::class, 'delete']);
 
 // Project Member
-Route::get('projects/{projectId}/getMembers', [ProjectMemberController::class, 'index']);
-Route::post('projects/{projectId}/addMember', [ProjectMemberController::class, 'store']);
-Route::post('projects/{projectId}/removeMember', [ProjectMemberController::class, 'delete']);
+Route::get($prefix . '/projects/{projectId}/getMembers', [ProjectMemberController::class, 'index']);
+Route::post($prefix . '/projects/{projectId}/addMember', [ProjectMemberController::class, 'store']);
+Route::post($prefix . '/projects/{projectId}/removeMember', [ProjectMemberController::class, 'delete']);
 
 // Task Comment
-Route::get('/tasks/{taskId}/comments', [TaskCommentController::class, 'index']);
-Route::get('/comments/{id}', [TaskCommentController::class, 'show']);
-Route::post('/tasks/{taskId}/comments', [TaskCommentController::class, 'store']);
-Route::post('/comments/{id}', [TaskCommentController::class, 'update']);
-Route::delete('/comments/{id}', [TaskCommentController::class, 'delete']);
+Route::get($prefix . '/tasks/{taskId}/comments', [TaskCommentController::class, 'index']);
+Route::get($prefix . '/comments/{id}', [TaskCommentController::class, 'show']);
+Route::post($prefix . '/tasks/{taskId}/comments', [TaskCommentController::class, 'store']);
+Route::post($prefix . '/comments/{id}', [TaskCommentController::class, 'update']);
+Route::delete($prefix . '/comments/{id}', [TaskCommentController::class, 'delete']);
