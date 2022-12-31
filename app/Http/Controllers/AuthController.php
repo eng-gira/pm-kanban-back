@@ -26,7 +26,7 @@ class AuthController extends Controller
             $user->password = bcrypt($validated['password']); // must store encrypted (bycrypted) pw for Auth::attempt to work.
 
             if($user->save()) {
-                $accessToken = Auth::claims(['user' => $user])->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
+                $accessToken = Auth::setTTL(15)->claims(['user' => $user])->attempt(['email' => $validated['email'], 'password' => $validated['password']]);
  
                 return $this->respondWithToken($accessToken);
             }
@@ -45,7 +45,7 @@ class AuthController extends Controller
 
             $user = User::where('email', '=', $validated['email'])->first();
 
-            $accessToken = Auth::claims(['user' => $user])->attempt($validated);
+            $accessToken = Auth::setTTL(15)->claims(['user' => $user])->attempt($validated);
 
             if(! $accessToken) {
                 return response()->json(['message' => 'failed', 'data' => 'Unauthorized'], 401);
